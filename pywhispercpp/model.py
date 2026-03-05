@@ -34,7 +34,7 @@ class Segment:
     A small class representing a transcription segment
     """
 
-    def __init__(self, t0: int, t1: int, text: str, probability: float = np.nan):
+    def __init__(self, t0: int, t1: int, text: str, probability: float = np.nan, text_list=[], token_list=[], prob_list=[]):
         """
         :param t0: start time
         :param t1: end time
@@ -47,6 +47,9 @@ class Segment:
         self.t1 = t1
         self.text = text
         self.probability = probability
+        self.text_list = text_list
+        self.token_list = token_list
+        self.prob_list = prob_list
 
     def __str__(self):
         return f"t0={self.t0}, t1={self.t1}, text={self.text}, probability={self.probability}"
@@ -180,7 +183,9 @@ class Model:
             text = bytes.decode('utf-8', errors='replace')
 
             avg_prob = np.nan
-
+            token_list = []
+            text_list = []
+            prob_list = []
             # Only calculate probabilities if requested
             if extract_probability:
                 n_tokens = pw.whisper_full_n_tokens(ctx, i)
@@ -189,12 +194,18 @@ class Model:
                 elif n_tokens > 1:
                     total_logprob = 0.0
                     for j in range(n_tokens):
+                        # print(pw.whisper_full_get_token_text(ctx, i, j))
+                        data_all = pw.whisper_full_get_token_data(ctx, i, j)
+                        # print(pw.whisper_full_get_token_text(ctx, i, j), data_all.id, data_all.p, data_all.plog)
+                        text_list.append(pw.whisper_full_get_token_text(ctx, i, j))
+                        prob_list.append(data_all.p)
+                        token_list.append(data_all.id)
                         total_logprob += np.log(pw.whisper_full_get_token_p(ctx, i, j))
                     avg_prob = np.exp(total_logprob / n_tokens)
                 else:
                     avg_prob = np.nan
 
-            res.append(Segment(t0, t1, text.strip(), probability=np.float32(avg_prob)))
+            res.append(Segment(t0, t1, text.strip(), probability=np.float32(avg_prob), prob_list=prob_list, text_list=text_list, token_list=token_list))
         return res
 
     def get_params(self) -> dict:
