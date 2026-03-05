@@ -194,9 +194,7 @@ class Model:
                 elif n_tokens > 1:
                     total_logprob = 0.0
                     for j in range(n_tokens):
-                        # print(pw.whisper_full_get_token_text(ctx, i, j))
                         data_all = pw.whisper_full_get_token_data(ctx, i, j)
-                        # print(pw.whisper_full_get_token_text(ctx, i, j), data_all.id, data_all.p, data_all.plog)
                         text_list.append(pw.whisper_full_get_token_text(ctx, i, j))
                         prob_list.append(data_all.p)
                         token_list.append(data_all.id)
